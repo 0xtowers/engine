@@ -6,12 +6,11 @@ import (
 	"github.com/xh3b4sd/tracer"
 )
 
-// TODO fetch user balance from onchain contract after each vote
 func (e *Engine) Deposit(tnx string, use string, bal int) error {
 	var err error
 
 	{
-		err = e.verifyDepsoit(tnx, use, bal)
+		err = e.verifyDeposit(tnx, use, bal)
 		if err != nil {
 			return tracer.Mask(err)
 		}
@@ -25,7 +24,7 @@ func (e *Engine) Deposit(tnx string, use string, bal int) error {
 	return nil
 }
 
-func (e *Engine) verifyDepsoit(tnx string, use string, bal int) error {
+func (e *Engine) verifyDeposit(tnx string, use string, bal int) error {
 	if e.Finish() == 1 {
 		return fmt.Errorf("game is finished")
 	}

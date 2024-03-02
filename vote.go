@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/xh3b4sd/tracer"
 )
@@ -20,7 +19,7 @@ func (e *Engine) Vote(tow int, use string, amo int, bal int) error {
 
 	// record time of latest deposit
 	{
-		e.tim = time.Now().UTC()
+		e.tim = e.now()
 	}
 
 	// record user vote for tower
@@ -30,6 +29,13 @@ func (e *Engine) Vote(tow int, use string, amo int, bal int) error {
 		e.tow[tow] += amo
 		e.use[tow][use] += amo
 	}
+
+	{
+		e.lea = e.leadingTower()
+	}
+
+	// TODO call Engine.Deposit to fetch user balance from onchain contract after
+	// each vote
 
 	return nil
 }
@@ -60,19 +66,14 @@ func (e *Engine) verifyVote(tow int, use string, amo int, bal int) error {
 	}
 
 	// leading tower must not be higher than 3 deposits
-	var lea []int
-	{
-		lea = e.leadingTower()
-	}
-
-	if lea[0] == tow && (e.dep[lea[0]]-e.dep[lea[1]]) >= 3 {
+	if e.lea[0] == tow && (e.dep[e.lea[0]]-e.dep[e.lea[1]]) >= 3 {
 		return fmt.Errorf("leading tower has maximum lead")
 	}
 
 	return nil
 }
 
-func (e *Engine) leadingTower() []int {
+func (e *Engine) leadingTower() [3]int {
 	type wrp struct {
 		dep int
 		tow int
@@ -91,9 +92,13 @@ func (e *Engine) leadingTower() []int {
 		sort.SliceStable(srt, func(i, j int) bool { return srt[i].dep > srt[j].dep })
 	}
 
-	var tow []int
-	for _, x := range srt {
-		tow = append(tow, x.tow)
+	if srt[0].dep == srt[1].dep {
+		return [3]int{}
+	}
+
+	var tow [3]int
+	for i, x := range srt {
+		tow[i] = x.tow
 	}
 
 	return tow
